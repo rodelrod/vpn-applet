@@ -33,8 +33,8 @@ class VpnApplet:
         self.menu.append(self.disconnect_item)
 
         # check if we're connected already
-        p = envoy.run("ip address | grep ppp0")
-        if p.std_out:
+        check_connected = envoy.run("ip address | grep ppp0")
+        if check_connected.std_out:
             # we're already connected
             self.disconnect_item.show()
         else:
@@ -54,22 +54,23 @@ class VpnApplet:
         gtk.main()
 
     def connect(self, widget):
-        p = envoy.run("gksudo " + SDIR + "/connect_rueil.sh")
-        if p.status_code == 0:
-            if self.notification_is_set:
-                n = pynotify.Notification(APPNAME, "Successfully connected to Rueil VPN")
-                n.show()
-            self.disconnect_item.show()
-            self.connect_item.hide()
-        else:
-            if self.notification_is_set:
-                n = pynotify.Notification(APPNAME, "Error connecting to Rueil VPN: "
-                                                   "check syslog and auth.log")
-                n.show()
+        connect_process = envoy.run("gksudo " + SDIR + "/connect_rueil.sh")
+        if connect_process.status_code == 0:
+            check_connected = envoy.run("ip address | grep ppp0")
+            if check_connected.std_out:
+                if self.notification_is_set:
+                    n = pynotify.Notification(APPNAME, "Successfully connected to Rueil VPN")
+                    n.show()
+                self.disconnect_item.show()
+                self.connect_item.hide()
+        if self.notification_is_set:
+            n = pynotify.Notification(APPNAME, "Error connecting to Rueil VPN: "
+                                               "check syslog and auth.log")
+            n.show()
            
     def disconnect(self, widget):
-        p = envoy.run("gksudo " + SDIR + "/disconnect_rueil.sh")
-        if p.status_code == 0:
+        disconnect_process = envoy.run("gksudo " + SDIR + "/disconnect_rueil.sh")
+        if disconnect_process.status_code == 0:
             if self.notification_is_set:
                 n = pynotify.Notification(APPNAME, "Successfully disconnected from Rueil VPN")
                 n.show()
