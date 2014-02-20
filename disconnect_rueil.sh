@@ -5,3 +5,7 @@ if [ $EUID -ne 0 ]; then
 fi
 xl2tpd-control disconnect rueil
 ipsec auto --down rueil
+ROUTE_EXISTS=`ip route show 172.27.4.128/25 | wc -l`
+if [ $ROUTE_EXISTS -eq 1 ]; then
+    route del -net 172.27.4.128/25
+fi
